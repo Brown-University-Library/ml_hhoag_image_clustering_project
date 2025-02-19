@@ -61,6 +61,10 @@ else:
     device = torch.device('cpu')
 
 ## load model -------------------------------------------------------
+"""
+Overview of CLIPModel, CLIPProcessor, transformers, and torch:
+<https://chatgpt.com/share/67b5d81e-ce68-8006-a244-5bf35cd1cebb>
+"""
 model_name = 'openai/clip-vit-base-patch32'
 model = CLIPModel.from_pretrained(model_name).to(device)
 processor = CLIPProcessor.from_pretrained(model_name)
