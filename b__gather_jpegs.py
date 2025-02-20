@@ -14,8 +14,8 @@ $ uv run ./a__gather_org_pids.py
 
 import json
 import logging
-import pprint
 import sys
+import time
 from pathlib import Path
 
 import httpx
@@ -48,13 +48,23 @@ def check_cwd() -> None:
     return
 
 
+def load_images_json(images_json_path: str) -> list[Path]:
+    images_json_path = Path(images_json_path).resolve()
+    if not images_json_path.exists():
+        return []
+    with open(images_json_path) as f:
+        jdict = json.loads(f.read())
+        return jdict
+
+
 def download_images(entries: list[ImageEntry], images_dir_path_string: str) -> list[Path]:
     images_dir_path = Path(images_dir_path_string).resolve()
     log.info(f'images_dir_path: ``{images_dir_path}``')
     images_dir_path.mkdir(parents=True, exist_ok=True)  # create the directory if needed
 
-    downloaded_image_paths: list[Path] = []
     for entry in entries:
+        time.sleep(0.5)
+        downloaded_image_paths: list[Path] = load_images_json(SAVED_IMAGES_JSON_PATH)
         mods_id: str = entry['mods_id_bdr_pid_ssim']
         pid: str = entry['pid']
         ## construct iiif-url ---------------------------------------
@@ -72,7 +82,10 @@ def download_images(entries: list[ImageEntry], images_dir_path_string: str) -> l
         file_path: Path = images_dir_path / file_name
         file_path = file_path.resolve()
         file_path.write_bytes(response.content)
-        downloaded_image_paths.append(str(file_path))
+        # if file_path not in downloaded_image_paths:
+        if str(file_path) not in downloaded_image_paths:
+            downloaded_image_paths.append(str(file_path))
+            export_json(downloaded_image_paths)
         log.info(f'Downloaded {file_name} from {url}')
     return downloaded_image_paths
 
@@ -88,10 +101,7 @@ def export_json(pids_and_IDs: list) -> None:
 
 def main() -> None:
     check_cwd()
-    downloaded_paths: list[Path] = download_images(image_entries, SAVED_IMAGES_DIR_PATH)
-    log.info('Downloaded image paths.')
-    log.info(f'downloaded_paths: ``{pprint.pformat(downloaded_paths)}``')
-    export_json(downloaded_paths)
+    download_images(image_entries, SAVED_IMAGES_DIR_PATH)
     return
 
 
