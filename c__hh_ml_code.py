@@ -47,6 +47,8 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
+## setup stuff ------------------------------------------------------
+
 ## image-dir path ---------------------------------------------------
 relative_images_dir_path = './jpeg_images/'
 IMAGES_DIR_PATH: Path = Path(relative_images_dir_path).resolve()
@@ -74,7 +76,12 @@ model = CLIPModel.from_pretrained(model_name).to(device)
 processor = CLIPProcessor.from_pretrained(model_name)
 
 
+## main function, calling others below ------------------------------
 def main() -> None:
+    """
+    Manages overall processing.
+    Called by dundermain.
+    """
     ## setup db connection ------------------------------------------
     conn: sqlite3.Connection = setup_database(DB_PATH)
 
@@ -84,7 +91,7 @@ def main() -> None:
     conn.commit()
 
     ## load image-paths ---------------------------------------------
-    image_paths: list = load_image_paths(IMAGES_DIR_PATH)
+    image_paths: list[Path] = load_image_paths(IMAGES_DIR_PATH)
 
     ## process each image -------------------------------------------
     for i, image_path in enumerate(image_paths):
@@ -109,7 +116,11 @@ def main() -> None:
         log.info('No embeddings found in the database.')
         return
 
-    ## prep embeddings and image0paths for clustering
+    ## prep embeddings and image-paths for clustering ---------------
+    """
+    Collects all individual embeddings into one array, useful for batch processing 
+    or feeding data into machine learning models.
+    """
     ids, paths, embeddings = tuple(zip(*data))
     embeddings_np: np.ndarray = np.stack(embeddings, axis=0)
 
@@ -139,9 +150,10 @@ def main() -> None:
     labels: np.ndarray = cluster_embeddings(embeddings_np, eps=eps_val, min_samples=1)
 
     ## print cluster-grouping for each image ----
-    log.info('\nCluster groupings:')
+    log.info('\n\nCluster groupings:')
     for img_id, path, label in zip(ids, paths, labels):
-        log.info(f'Image ID: {img_id}, Path: {path}, Cluster: {label}')
+        # log.info(f'Image ID: {img_id}, Path: {path}, Cluster: {label}')
+        log.info(f'Image ID: {img_id}, Cluster: {label}')
 
     ## close db connection ------------------------------------------
     conn.close()
@@ -153,7 +165,7 @@ def main() -> None:
 
 def load_image_paths(images_dir_path: Path) -> list[Path]:
     """
-    Load all image paths from the given directory.
+    Loads all image paths from the given directory.
     """
     if not images_dir_path.exists():
         raise FileNotFoundError(f'Images directory not found: {images_dir_path}')
@@ -167,16 +179,17 @@ def load_image_paths(images_dir_path: Path) -> list[Path]:
 
 def load_and_preprocess_image(image_path: str) -> Image.Image:
     """
-    Load an image from the given path and return a PIL Image.
+    Loads image from the given path and returns a PIL Image.
     """
     if not image_path.exists():
-        raise FileNotFoundError(f'Image file not found: {image_path}')
-    return Image.open(image_path).convert('RGB')
+        raise FileNotFoundError(f'image_path not found: ``{image_path}``')
+    img: Image.Image = Image.open(image_path).convert('RGB')
+    return img
 
 
 def get_image_embedding(image: Image.Image) -> np.ndarray:
     """
-    Generate an embedding for the given image using CLIP.
+    Generates an embedding for the given image using CLIP.
     Returns a numpy array of embeddings.
     """
     inputs: dict[str, Any] = processor(images=image, return_tensors='pt')
@@ -248,13 +261,22 @@ def load_all_embeddings(conn: sqlite3.Connection) -> list[tuple[int, str, np.nda
 
 def cluster_embeddings(embeddings: np.ndarray, eps: float = 0.1, min_samples: int = 1) -> np.ndarray:
     """
-    Cluster the embeddings using DBSCAN with cosine metric.
-    eps: Maximum distance between two samples for them to be considered as in the same neighborhood.
-    min_samples: Minimum number of samples in a neighborhood for a point to be considered a core point.
-    Returns the cluster labels.
+    Clusters the embeddings using DBSCAN with cosine metric.
+
+    DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a clustering algorithm
+    that groups together points that are closely packed
+
+    Parameters:
+    - eps: Maximum distance between two samples for them to be considered as in the same neighborhood.
+    - min_samples: Minimum number of samples in a neighborhood for a point to be considered a core point.
+    - metric: The metric to use when calculating distance between instances in a feature array.
+
+    Returns the cluster labels, an array where each element is an integer representing the cluster
+    to which the corresponding embedding belongs.
     """
     clustering = DBSCAN(eps=eps, min_samples=min_samples, metric='cosine')
     labels: np.ndarray = clustering.fit_predict(embeddings)
+    log.info(f'cluster labels, ``{labels}``')
     return labels
 
 
