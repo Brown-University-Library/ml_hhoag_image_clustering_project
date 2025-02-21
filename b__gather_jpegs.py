@@ -24,6 +24,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
+SOURCE_IMAGE_ENTRY_JSON_PATH = '../output_data/a__afl_cio_HH018977_org_pids.json'
 PROJECT_DIR_NAME = 'ml_hhoag_image_clustering_project'
 SAVED_IMAGES_DIR_PATH = '../output_data/the_images/'
 SAVED_IMAGES_JSON_PATH = '../output_data/b__afl_cio_HH018977_image_paths.json'
@@ -33,10 +34,17 @@ SAVED_IMAGES_JSON_PATH = '../output_data/b__afl_cio_HH018977_image_paths.json'
 ImageEntry = dict[str, str]
 
 ## sample data
-image_entries: list[ImageEntry] = [
-    {'mods_id_bdr_pid_ssim': 'HH018977_0003', 'pid': 'bdr:7gfwfrsp'},
-    {'mods_id_bdr_pid_ssim': 'HH018977_0004', 'pid': 'bdr:9mk2xybw'},
-]
+# image_entries: list[ImageEntry] = [
+#     {'mods_id_bdr_pid_ssim': 'HH018977_0003', 'pid': 'bdr:7gfwfrsp'},
+#     {'mods_id_bdr_pid_ssim': 'HH018977_0004', 'pid': 'bdr:9mk2xybw'},
+# ]
+
+## load the image entries from the json file
+# source_path = Path(SOURCE_IMAGE_ENTRY_JSON_PATH).resolve()
+# if not source_path.exists():
+#     log.error(f'ERROR: source_path does not exist: ``{source_path}``')
+#     sys.exit(1)
+# image_entries = json.loads(source_path.read_text())
 
 
 def check_cwd() -> None:
@@ -46,6 +54,15 @@ def check_cwd() -> None:
         print(f"ERROR: cd into the project directory; you're at:: ``{cwd}``")
         sys.exit(1)
     return
+
+
+def load_source_entry_data() -> list[ImageEntry]:
+    source_path = Path(SOURCE_IMAGE_ENTRY_JSON_PATH).resolve()
+    if not source_path.exists():
+        log.error(f'ERROR: source_path does not exist: ``{source_path}``')
+        sys.exit(1)
+    image_entries = json.loads(source_path.read_text())
+    return image_entries
 
 
 def load_images_json(images_json_path: str) -> list[Path]:
@@ -101,6 +118,7 @@ def export_json(pids_and_IDs: list) -> None:
 
 def main() -> None:
     check_cwd()
+    image_entries: list[ImageEntry] = load_source_entry_data()
     download_images(image_entries, SAVED_IMAGES_DIR_PATH)
     return
 
