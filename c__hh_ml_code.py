@@ -11,9 +11,17 @@
 
 
 """
-Usage:
+This script:
+- Loads images from a directory.
+- For each image:
+    - Computes an embedding.
+    - Saves the image path and embedding to an SQLite database.
+- Retrieves all embeddings from the database.
+- Clusters the embeddings using DBSCAN with cosine metric.
+- Prints the cluster groupings for each image.
 
-$ uv run ./hh_ml_code.py
+Usage:
+$ uv run ./c__hh_ml_code.py
 
 That's right, no need for a venv.
 Donations to <https://docs.astral.sh/uv/>  🙂
@@ -36,17 +44,19 @@ log = logging.getLogger(__name__)
 
 
 ## image paths ------------------------------------------------------
-_raw_image_paths = [
-    './jpeg_images/HH018977_0030.jpg',
-    './jpeg_images/HH018977_0031.jpg',
-    './jpeg_images/HH018977_0032.jpg',
-    './jpeg_images/HH018977_0033.jpg',
-    './jpeg_images/HH018977_0034.jpg',
-]
-IMAGE_PATHS: list[Path] = []
-for raw_path in _raw_image_paths:
-    path_obj: Path = Path(raw_path).resolve(strict=True)
-    IMAGE_PATHS.append(path_obj)
+# _raw_image_paths = [
+#     './jpeg_images/HH018977_0030.jpg',
+#     './jpeg_images/HH018977_0031.jpg',
+#     './jpeg_images/HH018977_0032.jpg',
+#     './jpeg_images/HH018977_0033.jpg',
+#     './jpeg_images/HH018977_0034.jpg',
+# ]
+# IMAGE_PATHS: list[Path] = []
+# for raw_path in _raw_image_paths:
+#     path_obj: Path = Path(raw_path).resolve(strict=True)
+#     IMAGE_PATHS.append(path_obj)
+raw_images_dir_path = '../output_data/the_images/'
+IMAGES_DIR_PATH: Path = Path(raw_images_dir_path).resolve()
 
 ## db path ----------------------------------------------------------
 _raw_db_path: str = '../image_embeddings.db'
@@ -68,6 +78,20 @@ Overview of CLIPModel, CLIPProcessor, transformers, and torch:
 model_name = 'openai/clip-vit-base-patch32'
 model = CLIPModel.from_pretrained(model_name).to(device)
 processor = CLIPProcessor.from_pretrained(model_name)
+
+
+def load_image_paths(images_dir_path: Path) -> list[Path]:
+    """
+    Load all image paths from the given directory.
+    """
+    if not images_dir_path.exists():
+        raise FileNotFoundError(f'Images directory not found: {images_dir_path}')
+    image_paths: list[Path] = list(images_dir_path.glob('*.jpg'))
+    ## sort image paths ---------------------------------------------
+    image_paths.sort()
+    # log.info(f'image_paths: ``{image_paths}``')
+    log.info(f'Loaded ``{len(image_paths)}`` image paths from ``{images_dir_path}``.')
+    return image_paths
 
 
 def load_and_preprocess_image(image_path: str) -> Image.Image:
@@ -97,6 +121,8 @@ def get_image_embedding(image: Image.Image) -> np.ndarray:
 
     # Move tensor to CPU and convert to numpy
     embedding: np.ndarray = image_features.cpu().numpy().squeeze()
+    # log.info(f'embedding shape: ``{embedding.shape}``')
+    # log.info(f'embedding: ``{embedding}``')
     return embedding
 
 
@@ -170,17 +196,27 @@ def main() -> None:
     cursor.execute('DELETE FROM embeddings')
     conn.commit()
 
+    ## load image-paths ---------------------------------------------
+    image_paths: list = load_image_paths(IMAGES_DIR_PATH)
+
     ## process each image -------------------------------------------
-    for image_path in IMAGE_PATHS:
-        log.info(f'image_path: ``{image_path}``')
+    for i, image_path in enumerate(image_paths):
+        # log.info(f'image_path: ``{image_path}``')
+        ## get filename from path ---------------
+        filename = image_path.name
+        log.info(f'filename: ``{filename}``')
         try:
             ## load image -----------------------
             image: Image.Image = load_and_preprocess_image(image_path)
             ## compute embedding ----------------
             embedding: np.ndarray = get_image_embedding(image)
             ## save embedding -------------------
-            save_embedding(conn, image_path, embedding)
+            # save_embedding(conn, image_path, embedding)
+            save_embedding(conn, filename, embedding)
             log.info(f'Processed and saved embedding for {image_path} with shape {embedding.shape}.')
+
+            if i > 50:
+                break
         except Exception as e:
             log.info(f'Error processing {image_path}: {e}')
 
