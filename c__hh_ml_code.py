@@ -149,11 +149,10 @@ def main() -> None:
     eps_val: float = 0.1
     labels: np.ndarray = cluster_embeddings(embeddings_np, eps=eps_val, min_samples=1)
 
-    ## print cluster-grouping for each image ----
+    ## print cluster-grouping for each image ------------------------
     log.info('\n\nCluster groupings:')
     for img_id, path, label in zip(ids, paths, labels):
-        # log.info(f'Image ID: {img_id}, Path: {path}, Cluster: {label}')
-        log.info(f'Image ID: {img_id}, Cluster: {label}')
+        log.info(f'filename, ``{path}``; cluster: ``{label}``')
 
     ## close db connection ------------------------------------------
     conn.close()
@@ -161,6 +160,23 @@ def main() -> None:
     return
 
     ## end def main()
+
+
+def setup_database(db_path: str) -> sqlite3.Connection:
+    """
+    Create (if not exists) and connect to the SQLite database.
+    """
+    conn: sqlite3.Connection = sqlite3.connect(db_path)
+    cursor: sqlite3.Cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS embeddings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            image_path TEXT NOT NULL,
+            embedding BLOB NOT NULL
+        )
+    """)
+    conn.commit()
+    return conn
 
 
 def load_image_paths(images_dir_path: Path) -> list[Path]:
@@ -210,29 +226,12 @@ def get_image_embedding(image: Image.Image) -> np.ndarray:
     return embedding
 
 
-def setup_database(db_path: str) -> sqlite3.Connection:
-    """
-    Create (if not exists) and connect to the SQLite database.
-    """
-    conn: sqlite3.Connection = sqlite3.connect(db_path)
-    cursor: sqlite3.Cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS embeddings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            image_path TEXT NOT NULL,
-            embedding BLOB NOT NULL
-        )
-    """)
-    conn.commit()
-    return conn
-
-
 def save_embedding(conn: sqlite3.Connection, image_path: str, embedding: np.ndarray) -> None:
     """
-    Save the image path and its embedding (serialized as a BLOB) to the database.
+    Saves image-path and its embedding (serialized as a BLOB) to the database.
     """
     cursor: sqlite3.Cursor = conn.cursor()
-    # Serialize the numpy array using pickle
+    ## serialize the numpy array using pickle -----------------------
     embedding_blob: bytes = pickle.dumps(embedding)
     cursor.execute(
         """
@@ -242,12 +241,19 @@ def save_embedding(conn: sqlite3.Connection, image_path: str, embedding: np.ndar
         (str(image_path), embedding_blob),
     )
     conn.commit()
+    return
 
 
 def load_all_embeddings(conn: sqlite3.Connection) -> list[tuple[int, str, np.ndarray]]:
     """
-    Retrieve all embeddings and associated image paths from the database.
+    Retrieves all embeddings and associated image paths from the database.
     Returns a list of (id, image_path, embedding) tuples.
+
+    Note:
+    - Embeddings are loaded into memory because SQLite doesn't support native vector operations
+      like similarity or nearest-neighbor search on stored binary objects.
+    - By loading embeddings into memory, we can use the DBSCAN algorithm to cluster them in the next step.
+    - For large datasets, we should use a database that supports vector operations.
     """
     cursor: sqlite3.Cursor = conn.cursor()
     cursor.execute('SELECT id, image_path, embedding FROM embeddings')
