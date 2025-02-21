@@ -39,30 +39,24 @@ from PIL import Image
 from sklearn.cluster import DBSCAN
 from transformers import CLIPModel, CLIPProcessor
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s [%(module)s-%(funcName)s()::%(lineno)d] %(message)s',
+    datefmt='%d/%b/%Y %H:%M:%S',
+)
 log = logging.getLogger(__name__)
 
 
-## image paths ------------------------------------------------------
-# _raw_image_paths = [
-#     './jpeg_images/HH018977_0030.jpg',
-#     './jpeg_images/HH018977_0031.jpg',
-#     './jpeg_images/HH018977_0032.jpg',
-#     './jpeg_images/HH018977_0033.jpg',
-#     './jpeg_images/HH018977_0034.jpg',
-# ]
-# IMAGE_PATHS: list[Path] = []
-# for raw_path in _raw_image_paths:
-#     path_obj: Path = Path(raw_path).resolve(strict=True)
-#     IMAGE_PATHS.append(path_obj)
-raw_images_dir_path = '../output_data/the_images/'
-IMAGES_DIR_PATH: Path = Path(raw_images_dir_path).resolve()
+## image-dir path ---------------------------------------------------
+relative_images_dir_path = './jpeg_images/'
+IMAGES_DIR_PATH: Path = Path(relative_images_dir_path).resolve()
 
 ## db path ----------------------------------------------------------
-_raw_db_path: str = '../image_embeddings.db'
-DB_PATH: Path = Path(_raw_db_path).resolve()
+relative_db_path: str = '../image_embeddings.db'
+DB_PATH: Path = Path(relative_db_path).resolve()
 
 ## use apple gpu if available ---------------------------------------
+## (mps overview: <https://chatgpt.com/share/67b7e078-76e4-8006-9d62-858497781336>)
 if torch.backends.mps.is_available():
     log.info('using mps')
     device = torch.device('mps')
@@ -78,6 +72,83 @@ Overview of CLIPModel, CLIPProcessor, transformers, and torch:
 model_name = 'openai/clip-vit-base-patch32'
 model = CLIPModel.from_pretrained(model_name).to(device)
 processor = CLIPProcessor.from_pretrained(model_name)
+
+
+def main() -> None:
+    ## setup db connection ------------------------------------------
+    conn: sqlite3.Connection = setup_database(DB_PATH)
+
+    ## clear embeddings table --------------------------------------
+    cursor: sqlite3.Cursor = conn.cursor()
+    cursor.execute('DELETE FROM embeddings')
+    conn.commit()
+
+    ## load image-paths ---------------------------------------------
+    image_paths: list = load_image_paths(IMAGES_DIR_PATH)
+
+    ## process each image -------------------------------------------
+    for i, image_path in enumerate(image_paths):
+        ## get filename from path -----------------------------------
+        filename = image_path.name
+        log.info(f'processing, ``{filename}``')
+        try:
+            ## load image -------------------------------------------
+            image: Image.Image = load_and_preprocess_image(image_path)
+            ## compute embedding ------------------------------------
+            embedding: np.ndarray = get_image_embedding(image)
+            ## save embedding ---------------------------------------
+            save_embedding(conn, filename, embedding)
+            if i > 50:
+                break
+        except Exception as e:
+            log.info(f'Error processing {image_path}: {e}')
+
+    ## retrieve all embeddings from db ------------------------------
+    data: list[tuple[int, str, np.ndarray]] = load_all_embeddings(conn)
+    if not data:
+        log.info('No embeddings found in the database.')
+        return
+
+    ## prep embeddings and image0paths for clustering
+    ids, paths, embeddings = tuple(zip(*data))
+    embeddings_np: np.ndarray = np.stack(embeddings, axis=0)
+
+    ## cluster embeddings -------------------------------------------
+    """
+    "eps" (epsilon) is a key parameter for the DBSCAN clustering algorithm.
+
+    Definition:
+
+    eps defines the maximum distance between two data points for them to be
+    considered as neighbors. In other words, it determines how "close"
+    points need to be to be grouped in the same cluster.
+
+    Impact on Clustering:
+
+    A smaller eps value means that only very nearby points will be grouped
+    together, which might lead to more clusters and potentially some points
+    being labeled as noise (or outliers).
+
+    A larger eps value allows points that are farther apart to be grouped
+    together, potentially merging distinct clusters into one.
+
+    Experimenting with different eps values or using techniques like the
+    k-distance graph can help in finding a more appropriate value.
+    """
+    eps_val: float = 0.1
+    labels: np.ndarray = cluster_embeddings(embeddings_np, eps=eps_val, min_samples=1)
+
+    ## print cluster-grouping for each image ----
+    log.info('\nCluster groupings:')
+    for img_id, path, label in zip(ids, paths, labels):
+        log.info(f'Image ID: {img_id}, Path: {path}, Cluster: {label}')
+
+    ## close db connection ------------------------------------------
+    conn.close()
+
+    return
+
+    ## end def main()
 
 
 def load_image_paths(images_dir_path: Path) -> list[Path]:
@@ -185,89 +256,6 @@ def cluster_embeddings(embeddings: np.ndarray, eps: float = 0.1, min_samples: in
     clustering = DBSCAN(eps=eps, min_samples=min_samples, metric='cosine')
     labels: np.ndarray = clustering.fit_predict(embeddings)
     return labels
-
-
-def main() -> None:
-    ## setup db connection ------------------------------------------
-    conn: sqlite3.Connection = setup_database(DB_PATH)
-
-    ## clear embeddings table --------------------------------------
-    cursor: sqlite3.Cursor = conn.cursor()
-    cursor.execute('DELETE FROM embeddings')
-    conn.commit()
-
-    ## load image-paths ---------------------------------------------
-    image_paths: list = load_image_paths(IMAGES_DIR_PATH)
-
-    ## process each image -------------------------------------------
-    for i, image_path in enumerate(image_paths):
-        # log.info(f'image_path: ``{image_path}``')
-        ## get filename from path ---------------
-        filename = image_path.name
-        log.info(f'filename: ``{filename}``')
-        try:
-            ## load image -----------------------
-            image: Image.Image = load_and_preprocess_image(image_path)
-            ## compute embedding ----------------
-            embedding: np.ndarray = get_image_embedding(image)
-            ## save embedding -------------------
-            # save_embedding(conn, image_path, embedding)
-            save_embedding(conn, filename, embedding)
-            log.info(f'Processed and saved embedding for {image_path} with shape {embedding.shape}.')
-
-            if i > 50:
-                break
-        except Exception as e:
-            log.info(f'Error processing {image_path}: {e}')
-
-    ## retrieve all embeddings from db ----------
-    data: list[tuple[int, str, np.ndarray]] = load_all_embeddings(conn)
-    if not data:
-        log.info('No embeddings found in the database.')
-        return
-
-    ## prep embeddings and image0paths for clustering
-    ids, paths, embeddings = tuple(zip(*data))
-    embeddings_np: np.ndarray = np.stack(embeddings, axis=0)
-
-    ## cluster embeddings -----------------------
-    """
-    "eps" (epsilon) is a key parameter for the DBSCAN clustering algorithm.
-
-    Definition:
-
-    eps defines the maximum distance between two data points for them to be
-    considered as neighbors. In other words, it determines how "close"
-    points need to be to be grouped in the same cluster.
-
-    Impact on Clustering:
-
-    A smaller eps value means that only very nearby points will be grouped
-    together, which might lead to more clusters and potentially some points
-    being labeled as noise (or outliers).
-
-    A larger eps value allows points that are farther apart to be grouped
-    together, potentially merging distinct clusters into one.
-
-    Experimenting with different eps values or using techniques like the
-    k-distance graph can help in finding a more appropriate value.
-    """
-    ## goal: 30 & 31 in one cluster, 32 in another, 33 & 34 in another
-    eps_val: float = (
-        0.1  # 30 & 31 in cluster 0 (good); 32 in cluster 1 (good); 33 in cluster 2 (good); 34 in cluster 3 (bad)
-    )
-    # eps_val: float = 0.5  # puts everything in cluster 0 (bad)
-    # eps_val: float = 0.2  # puts 30 & 31 & 32 in a cluster (bad); 33 & 34 in different clusters (bad)
-    # eps_val: float = 0.3  # same as above (bad)
-    # eps_val: float = 0.4  # puts 30 & 31 & 32 in a cluster (bad); 33 & 34 the same cluster (good)
-    labels: np.ndarray = cluster_embeddings(embeddings_np, eps=eps_val, min_samples=1)
-
-    ## print cluster-grouping for each image ----
-    log.info('\nCluster groupings:')
-    for img_id, path, label in zip(ids, paths, labels):
-        log.info(f'Image ID: {img_id}, Path: {path}, Cluster: {label}')
-
-    conn.close()
 
 
 if __name__ == '__main__':
