@@ -217,7 +217,7 @@ def get_image_embedding(image: Image.Image) -> np.ndarray:
         image_features: torch.Tensor = model.get_image_features(**inputs)
 
     # Normalize the features (commonly done for similarity tasks)
-    image_features = image_features / image_features.norm(p=2, dim=-1, keepdim=True)
+    image_features: torch.Tensor = image_features / image_features.norm(p=2, dim=-1, keepdim=True)
 
     # Move tensor to CPU and convert to numpy
     embedding: np.ndarray = image_features.cpu().numpy().squeeze()
