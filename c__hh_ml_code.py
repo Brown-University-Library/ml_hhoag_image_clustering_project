@@ -253,11 +253,13 @@ def main() -> None:
     k-distance graph can help in finding a more appropriate value.
     """
     ## goal: 30 & 31 in one cluster, 32 in another, 33 & 34 in another
-    # eps_val: float = 0.1  # 30 & 31 in cluster 0 (good); 32 in cluster 1 (good); 33 in cluster 2 (good); 34 in cluster 3 (bad)
+    eps_val: float = (
+        0.1  # 30 & 31 in cluster 0 (good); 32 in cluster 1 (good); 33 in cluster 2 (good); 34 in cluster 3 (bad)
+    )
     # eps_val: float = 0.5  # puts everything in cluster 0 (bad)
     # eps_val: float = 0.2  # puts 30 & 31 & 32 in a cluster (bad); 33 & 34 in different clusters (bad)
     # eps_val: float = 0.3  # same as above (bad)
-    eps_val: float = 0.4  # puts 30 & 31 & 32 in a cluster (bad); 33 & 34 the same cluster (good)
+    # eps_val: float = 0.4  # puts 30 & 31 & 32 in a cluster (bad); 33 & 34 the same cluster (good)
     labels: np.ndarray = cluster_embeddings(embeddings_np, eps=eps_val, min_samples=1)
 
     ## print cluster-grouping for each image ----
