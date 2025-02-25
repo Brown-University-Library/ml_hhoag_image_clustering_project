@@ -27,7 +27,7 @@ Nevertheless, the results indicate that this embedding approach could be a very 
 
 This [google-spreadsheet][ggl] shows clustering results for 50 of the 587 images in the [AFL-CIO][AFL] Hall-Hoag organization. It's useful to skip back and forth from the spreadsheet to the AFL-CIO page (the "Has Parts" section) to better understand the groupings. The important parts are the last three columns.  
 
-The columns "01-groups" and "02-groups" show the grouping output from my code by making a single change to one setting. (The technique I used, described below, offers the ability to adjust _lots_ of settings.) The column "real-groups" shows the actual groups from a manual inspection of the images.
+The columns "01-groups" and "02-groups" both show the _predicted_ grouping output, from my code. The difference between the two is from a single change to one setting. (The technique I used, described below, offers the ability to adjust _lots_ of settings.) The column "real-groups" shows the actual groups from a manual inspection of the images.
 
 The alternating light-yellow and light-red cells highlight groupings of the "real" images for comparison with the 2 prediction columns. (A clarification note: Look at the last grouping... Note that it doesn't matter that the "real" column has the number "10" for all the related images, but the other two prediction-columns have the numbers "15" and "12". The important thing is the grouping, not the actual numbers.)
 
