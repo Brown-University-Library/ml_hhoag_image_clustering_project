@@ -66,7 +66,7 @@ This is similar to what a vision-model does:
 
 - Instead of a few features like color and ear-shape, a vision-model can track hundreds or even thousands of subtle details. (Those "features" are called "dimensions" in machine-learning jargon.)
 
-- Instead of writing them on paper, a vision-model stores its evaluation as a long list of numbers. (Called an "embedding vector" in machine-learning jargon.)
+- Instead of assigning words to a category, a vision-model assigns a number, and stores its evaluation as a long list of numbers. (Called an "embedding vector" in machine-learning jargon.)
 
 - Instead of checking which words match, we can examine those numbers. By comparing them mathematically, we can determine which images are most similar — closer numbers in the same dimensions mean more similarity.
 
