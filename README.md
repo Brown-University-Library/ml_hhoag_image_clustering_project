@@ -25,11 +25,11 @@ These are very prelimnary results; this is an outside-of-work side-project.
 
 Nevertheless, the results indicate that this embedding approach could be a very useful tool to group related images.
 
-This [google-spreadsheet][ggl] show clustering results for 50 of the 587 images in the [AFL-CIO][AFL] Hall-Hoag organization. The important parts are the last three columns. The technique I used (which I describe below) offers the ability to adjust _lots_ of settings. 
+This [google-spreadsheet][ggl] show clustering results for 50 of the 587 images in the [AFL-CIO][AFL] Hall-Hoag organization. It's useful to skip back and forth from the spreadsheet to the AFL-CIO organization to get a sense of the grouping. The important parts are the last three columns. The technique I used (which I describe below) offers the ability to adjust _lots_ of settings. 
 
-The columns "01-groups" and "02-groups" show the grouping output from my code by tweaking one of numerous settings. The column "real-groups" shows the actual groups from a manual inspection of the images.
+The columns "01-groups" and "02-groups" show the grouping output from my code by making a single change to one of numerous settings. The column "real-groups" shows the actual groups from a manual inspection of the images.
 
-The alternating light-yellow and light-red cells highlight groupings of the "real" images for comparison with the 2 prediction columns.
+The alternating light-yellow and light-red cells highlight groupings of the "real" images for comparison with the 2 prediction columns. (A clarification note: Look at the last grouping... Note that it doesn't matter that the "real" column has the number "10" for all the related images, but the other two prediction-columns have the numbers "15" and "12". The important thing is the grouping, not the actual numbers.)
 
 [ggl]: <https://docs.google.com/spreadsheets/d/10_lqr7n4qQ2e0zgZxXNt4rKIkLiTMlLg7UoLxF2G7Wc/>
 [AFL]: <https://repository.library.brown.edu/studio/item/bdr:9r3a8c4a/>
@@ -44,7 +44,7 @@ For very good reasons we're ingesting these this way -- but obviously we'd event
 
 ## Embeddings -- an overview
 
-I've mentioned that this clustering technique uses a vision-model to create embeddings. An explanation...
+I've mentioned that this clustering technique uses a vision-model to create "embeddings". An explanation...
 
 Imagine you're filling out a detailed checklist for a series of images of dogs. Imagine the checklist includes things like:
 
@@ -54,19 +54,19 @@ Imagine you're filling out a detailed checklist for a series of images of dogs. 
 - Color (black, brown, white, spotted, etc.)
 - Snout length (short, medium, long)
 
-Each dog gets a unique set of answers, and you can compare dogs by how many checklist items match.
+Each dog-picture gets a unique set of answers, and you can compare dogs by how many checklist items match.
 
 You could say things like "Height" and "Fur" are "categories" or "features", and a "value" is entered for each feature.
 
-It makes sense that the more features we track, the more detailed our understanding of the dog image.
+It makes sense that the more features you track, the more detailed your understanding of the dog image.
 
 Now, instead of entering words for the checklist-values, imagine that each of these features gets a number instead. 
 
 This is similar to what a vision-model does:
 
-- Instead of a few features like color and ear shape, a vision-model can track hundreds or even thousands of subtle details. (Those "features" are called "dimensions" in machine-learning jargon.)
+- Instead of a few features like color and ear-shape, a vision-model can track hundreds or even thousands of subtle details. (Those "features" are called "dimensions" in machine-learning jargon.)
 
-- Instead of writing them on paper, it stores them as a long list of numbers. (Called an "embedding vector" in machine-learning jargon.)
+- Instead of writing them on paper, a vision-model stores its evaluation as a long list of numbers. (Called an "embedding vector" in machine-learning jargon.)
 
 - Instead of checking which words match, we can examine those numbers. By comparing them mathematically, we can determine which images are most similar — closer numbers in the same dimensions mean more similarity.
 
