@@ -31,6 +31,9 @@ ORG_PIDS_JSON_PATH = '../output_data/a__afl_cio_HH018977_org_pids.json'
 
 
 def check_cwd() -> None:
+    """
+    Check that the script is being run from the correct directory.
+    """
     cwd = Path.cwd()
     log.debug(f'cwd: ``{cwd}``')
     if not cwd.name == PROJECT_DIR_NAME:
@@ -63,6 +66,9 @@ def fetch_parts(url: str) -> list[dict[str, str]]:
 
 
 def export_json(pids_and_IDs: list) -> None:
+    """
+    Saves the pids_and_IDs list to a json file.
+    """
     save_path = Path(ORG_PIDS_JSON_PATH).resolve()
     save_path.parent.mkdir(parents=True, exist_ok=True)  # create parent dirs if needed
     log.debug(f'save_path: ``{save_path}``')

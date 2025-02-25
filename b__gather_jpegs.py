@@ -30,21 +30,14 @@ SAVED_IMAGES_DIR_PATH = '../output_data/the_images/'
 SAVED_IMAGES_JSON_PATH = '../output_data/b__afl_cio_HH018977_image_paths.json'
 
 
-## define  type of the image entry
-ImageEntry = dict[str, str]
+ImageEntry = dict[str, str]  # just for type hinting
+
 
 ## sample data
 # image_entries: list[ImageEntry] = [
 #     {'mods_id_bdr_pid_ssim': 'HH018977_0003', 'pid': 'bdr:7gfwfrsp'},
 #     {'mods_id_bdr_pid_ssim': 'HH018977_0004', 'pid': 'bdr:9mk2xybw'},
 # ]
-
-## load the image entries from the json file
-# source_path = Path(SOURCE_IMAGE_ENTRY_JSON_PATH).resolve()
-# if not source_path.exists():
-#     log.error(f'ERROR: source_path does not exist: ``{source_path}``')
-#     sys.exit(1)
-# image_entries = json.loads(source_path.read_text())
 
 
 def check_cwd() -> None:
@@ -99,10 +92,9 @@ def download_images(entries: list[ImageEntry], images_dir_path_string: str) -> l
         file_path: Path = images_dir_path / file_name
         file_path = file_path.resolve()
         file_path.write_bytes(response.content)
-        # if file_path not in downloaded_image_paths:
         if str(file_path) not in downloaded_image_paths:
             downloaded_image_paths.append(str(file_path))
-            export_json(downloaded_image_paths)
+            export_json(downloaded_image_paths)  # saves along the way in case of interruption
         log.info(f'Downloaded {file_name} from {url}')
     return downloaded_image_paths
 

@@ -98,9 +98,9 @@ $ uv run ./cc__hh_ml_code.py
 
 ## Other
 
-- One oddity of the code is that it stores all the vector-arrays (lists of numbers) to an sqlite database, then reads all that data into memory at the "determine-similarity" step. That's because sqlite doesn't natively support vector-searching. For the number of images I was dealing with in this experiment, that's not a problem -- but it'd be worth either seeing if there are sqlite extensions that would allow direct db-searches, or use a db that supports that.
+- One oddity of the code is that it stores all the vector-arrays (lists of numbers) to an sqlite database -- but then reads all that data into memory at the "determine-similarity" step. That's because sqlite doesn't natively support vector-searching. For the number of images I was dealing with in this experiment, that's not a problem -- but it'd be worth  investigating sqlite extensions that would allow direct db-vector-searches, or using a db that supports them.
 
-- A sincere thanks to Brendan Quinn and Michael B. Klein of Northwestern University for their full-day [code4lib-con-2024 full-day LLM-workshop][c4l-llm] that really solidified my sense of embeddings and how they could be useful. Also to Justin Uhr and other colleagues at the Brown University Library who've taken initiative to explore how neural-networks and large-language models work, and can be used programmatically for a variety of projects.
+- A sincere thanks to Brendan Quinn and Michael B. Klein of the Northwestern University Library for their terrific full-day [code4lib-con-2024 full-day LLM-workshop][c4l-llm] that really solidified my sense of the concept of embeddings, as well as how to work with them programmatically. 
 
 [c4l-llm]: <https://2024.code4lib.org/workshop/GenAI4Lib-A-Practical-Introduction-to-Large-Language-Models>
 
