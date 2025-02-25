@@ -25,7 +25,7 @@ These are very prelimnary results; this is an outside-of-work side-project.
 
 Nevertheless, the results indicate that this embedding approach could be a very useful tool to group related images.
 
-This [google-spreadsheet][ggl] show clustering results for 50 of the 587 images in the [AFL-CIO][AFL] Hall-Hoag organization. It's useful to skip back and forth from the spreadsheet to the AFL-CIO organization to get a sense of the grouping. The important parts are the last three columns. The technique I used (which I describe below) offers the ability to adjust _lots_ of settings. 
+This [google-spreadsheet][ggl] shows clustering results for 50 of the 587 images in the [AFL-CIO][AFL] Hall-Hoag organization. It's useful to skip back and forth from the spreadsheet to the AFL-CIO organization to get a sense of the grouping. The important parts are the last three columns. The technique I used (which I describe below) offers the ability to adjust _lots_ of settings. 
 
 The columns "01-groups" and "02-groups" show the grouping output from my code by making a single change to one of numerous settings. The column "real-groups" shows the actual groups from a manual inspection of the images.
 
