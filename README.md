@@ -39,7 +39,7 @@ The alternating light-yellow and light-red cells highlight groupings of the "rea
 
 Context: a Hall-Hoag organization, like this [AFL-CIO organization][AFL], can have hundreds or thousands of scanned-images. There might be two-pages for a flyer (front and back), followed by four-pages for a letter, followed by 15-pages for a report. But all of those pages are just single-page images with zero item-level-metadata (not even a title). They're not "grouped" as a flyer, a letter, a report -- in any way.
 
-For very good reasons we're ingesting these this way -- but obviously we'd eventually like to be able to make improvements. Because we'll end up having some 900,000 scanned images, we'll be looking at programmatic ways to create metadata and group related images. Thus this preliminary experiment,  to get a feel for how "embeddings" can be used to cluster related images.
+For very good reasons we're ingesting these this way -- but obviously we'd eventually like to be able to make improvements. Because we'll end up having some 900,000 scanned images, we'll be looking at programmatic ways to create metadata -- and to group related images. Thus this preliminary experiment,  to get a feel for how "embeddings" can be used to cluster related images.
 
 
 ## Embeddings -- an overview
