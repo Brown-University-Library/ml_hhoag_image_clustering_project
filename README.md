@@ -5,7 +5,7 @@ on this page...
 - [Preliminary results](#preliminary-results)
 - [Problem being addressed](#problem-being-addressed)
 - [Embeddings -- an overview](#embeddings----an-overview)
-- [Futur work](#future-work)
+- [Future work](#future-work)
 - [Other](#other)
 
 ---
@@ -80,6 +80,7 @@ Regarding this embedding technique, there's lots more experimenting that could b
 - There are different settings I could change in the process of creating the numeric-representations of each image.
 - There are different settings I could change in the process of evaluating similarity.
 - For speed of processing, I'm using images that are only one-fourth the full-size images. Perhaps the higher-resolution images would yield better results.
+- I'm only passing images to the vision-model. I could integrate a parallel process of passing OCRed text to a model (or instructing a multi-modal model to read the text) -- and create embeddings from that, as well.
 
 Likely the best clustering results will involve using a variety of techniques, not only embeddings. There will be many situations where programmtic grouping is likely to prove challenging. A typical example would be where the colors and design of a "cover-page" will be very different from more predictable "article-pages" that follow. Still, this could be a very valuable "initial-pass" that by itself, and certainly with human followup, could facilitate useful grouping.
 
