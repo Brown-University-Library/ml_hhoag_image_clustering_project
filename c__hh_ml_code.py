@@ -103,6 +103,10 @@ def main() -> None:
             image: Image.Image = load_and_preprocess_image(image_path)
             ## compute embedding ------------------------------------
             embedding: np.ndarray = get_image_embedding(image)
+            if i == 0:
+                log.info(f'embedding type: ``{type(embedding)}``')  # ``<class 'numpy.ndarray'>``
+                log.info(f'embedding dtype: ``{embedding.dtype}``')  # ``float32``
+                log.info(f'length of embedding: ``{len(embedding)}``')  # ``512``
             ## save embedding ---------------------------------------
             save_embedding(conn, filename, embedding)
             if i > 50:
@@ -221,8 +225,6 @@ def get_image_embedding(image: Image.Image) -> np.ndarray:
 
     # Move tensor to CPU and convert to numpy
     embedding: np.ndarray = image_features.cpu().numpy().squeeze()
-    # log.info(f'embedding shape: ``{embedding.shape}``')
-    # log.info(f'embedding: ``{embedding}``')
     return embedding
 
 
